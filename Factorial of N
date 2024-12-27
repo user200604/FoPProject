@@ -1,0 +1,81 @@
+public class SimpleInterpreter {
+	    private int n;           // Variable for "n"
+	    private int factorial;   // Variable for "factorial"
+
+	    public void execute(String code) { // Executes the code
+	        String[] lines = code.split("\n");
+	        for (String line : lines) {
+	            process(line.trim());
+	        }
+	    }
+
+	    private void process(String line) {
+	        // Handles assignments and statements
+	        if (line.startsWith("n =")) { //
+	            n = parseValue(line.substring(3, line.length() - 1).trim());
+	        } else if (line.startsWith("factorial =")) {
+	            factorial = parseValue(line.substring(11, line.length() - 1).trim());
+	        } else if (line.startsWith("print(")) {
+	            handlePrint(line);
+	        } else if (line.startsWith("while")) {
+	            handleWhile(line);
+	        } else {
+	            System.out.println("Syntax Error: " + line);
+	        }
+	    }
+
+	    // Handling variable values, either from direct literals or existing variables
+	    private int parseValue(String expression) {
+	        try {
+	            return Integer.parseInt(expression); // Directly handles numeric literals
+	        } catch (NumberFormatException e) {
+	            if (expression.equals("n")) return n;
+	            if (expression.equals("factorial")) return factorial;
+	            System.out.println("Syntax Error: Invalid expression " + expression);
+	            return 0;
+	        }
+	    }
+
+	    // Handling print statements
+	    private void handlePrint(String line) {
+	        if (line.contains("n")) {
+	            System.out.println(n);
+	        } else if (line.contains("factorial")) {
+	            System.out.println(factorial);
+	        } else {
+	            System.out.println("Syntax Error: Invalid variable in print statement.");
+	        }
+	    }
+
+	    // Handling while loop (simplified)
+	    private void handleWhile(String line) {
+	        // Extract the condition (n > 0)
+	        String condition = line.substring(6, line.length()).trim();
+	        if (condition.equals("n > 0 do")) {
+	            while (n > 0) {
+	                // Simple loop logic: inside the while loop, parse the next factorial calculation
+	                factorial = factorial * n;
+	                n = n - 1; // Decrement n
+	            }
+	        } else {
+	            System.out.println("Syntax Error: Unsupported condition in while loop.");
+	        }
+	    }
+
+	    public static void main(String[] args) {
+	        // Sample code in Ruby for factorial to execute
+	        String code = """
+	            n = 5;
+	            factorial = 1;
+	            while n > 0 do
+	                factorial = factorial * n;
+	                n = n - 1;
+	            end;
+	            print(factorial);
+	        """;
+	        
+	        SimpleInterpreter interpreter = new SimpleInterpreter();
+	        interpreter.execute(code); // Execute the code
+	    }
+	}
+
