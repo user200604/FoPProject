@@ -1,0 +1,67 @@
+import java.util.HashMap;
+import java.util.Map;
+
+public class SimpleInterpreter {
+    private final Map<String, Integer> variables = new HashMap<>(); // variable storage
+
+    public void eval(String code) {
+        String[] lines = code.split(";"); // splitting by statement terminator
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+
+            // handling variable assignment
+            if (line.contains("=")) {
+                handleAssignment(line);
+            }
+            // handling print statements
+            else if (line.startsWith("PRINT")) {
+                handlePrint(line);
+            }
+        }
+    }
+
+    private void handleAssignment(String line) {
+        String[] parts = line.split("=");
+        String varName = parts[0].trim();
+        String expression = parts[1].trim();
+
+        // finding the largest digit in the number by iterating through its digits
+        int largestDigit = findLargestDigit(expression);
+        variables.put(varName, largestDigit);
+    }
+
+    private int findLargestDigit(String numberStr) {
+        int largestDigit = -1;
+
+        // iterating through each character of the string and find the largest digit
+        for (int i = 0; i < numberStr.length(); i++) {
+            char c = numberStr.charAt(i);
+            if (Character.isDigit(c)) {
+                int digit = c - '0'; // converting char to int
+                if (digit > largestDigit) {
+                    largestDigit = digit;
+                }
+            }
+        }
+        return largestDigit;
+    }
+
+    private void handlePrint(String line) {
+        String varName = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+        System.out.println(variables.get(varName));
+    }
+
+    public static void main(String[] args) {
+        SimpleInterpreter interpreter = new SimpleInterpreter();
+        
+
+        // example program: find and print the largest digit in the number "83947"
+        String program = """
+            largestDigit = 83947;
+            PRINT(largestDigit);
+        """;
+
+        interpreter.eval(program);
+    }
+}
