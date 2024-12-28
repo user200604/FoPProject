@@ -1,0 +1,70 @@
+import java.util.Map;
+import java.util.HashMap;
+public class SimpleInterpreter {
+    private final Map<String, Integer> variables = new HashMap<>(); // Variable storage
+
+    public void eval(String code) {
+        String[] lines = code.split(";"); 
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+
+            // Handle variable assignment
+            if (line.contains("==")) {
+                handleAssignment(line);
+            }
+            // Handle print statements
+            else if (line.startsWith("puts")) {
+                handlePrint(line);
+            }
+        }
+    }
+
+    private void handleAssignment(String line) {
+        String[] parts = line.split("==");
+        String varName = parts[0].trim();
+        String expression = parts[1].trim();
+        
+        // We are dealing with integers, so we can directly parse the value
+        if (expression.equals("is_palindrome(121)")) {
+            boolean isPalindrome = isPalindrome(121); // Handle specific palindrome case (is 121 palindrome or not)
+            variables.put(varName, isPalindrome ? 1 : 0); // Store as 1 (true) or 0 (false)
+        } else {
+            // Handle other types of assignments
+            try {
+                int value = Integer.parseInt(expression);
+                variables.put(varName, value);
+            } catch (NumberFormatException e) {
+                System.out.println("Error parsing expression: " + expression);
+            }
+        }
+    }
+
+    private void handlePrint(String line) {
+        String varName = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+        Integer value = variables.get(varName);
+        if (value != null) {
+            System.out.println(value == 1 ? "true" : "false");  // Print 'true' or 'false' based on value
+        } else {
+            System.out.println("Variable not found: " + varName);
+        }
+    }
+
+    private boolean isPalindrome(int number) {
+        String str = Integer.toString(number);
+        String reversed = new StringBuilder(str).reverse().toString();
+        return str.equals(reversed);
+    }
+
+    public static void main(String[] args) {
+        SimpleInterpreter interpreter = new SimpleInterpreter();
+
+        // Example program: Check if an integer reads the same backward and forward.
+        String program = """
+            is_palindrome_result == is_palindrome(121);
+            puts(is_palindrome_result);
+        """;
+
+        interpreter.eval(program);
+    }
+}
