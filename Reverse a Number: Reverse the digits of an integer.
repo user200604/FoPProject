@@ -1,0 +1,75 @@
+import java.util.HashMap;
+import java.util.Map;
+
+public class SimpleInterpreter {
+	  private final Map<String, Integer> variables = new HashMap<>(); // Variable storage
+
+	    public void eval(String code) {
+	        String[] lines = code.split("\n"); // Split by new lines
+	        for (String line : lines) {
+	            line = line.trim();
+	            if (line.isEmpty()) continue;
+
+	            // Handle variable assignment
+	            if (line.contains("=")) {
+	                handleAssignment(line);
+	            }
+	            // Handle print statements
+	            else if (line.startsWith("puts")) {
+	                handlePrint(line);
+	            }
+	        }
+	    }
+
+	    private void handleAssignment(String line) {
+	        String[] parts = line.split("=");
+	        String varName = parts[0].trim();
+	        String expression = parts[1].trim();
+
+	        // Check if the expression contains "to_s.reverse.to_i"
+	        if (expression.contains("to_s.reverse.to_i")) {
+	            String varToReverse = expression.split("\\.")[0].trim(); // Get the variable to reverse
+	            int numberToReverse = variables.getOrDefault(varToReverse, 0);
+	            int reversed = reverseNumber(numberToReverse);
+	            variables.put(varName, reversed);
+	        } else {
+	            // Simple assignment 
+	            int value = Integer.parseInt(expression);
+	            variables.put(varName, value);
+	        }
+	    }
+
+	    // Reverse the number (simulating Ruby's to_s.reverse.to_i)
+	    private int reverseNumber(int number) {
+	        String str = Integer.toString(number);
+	        String reversedStr = new StringBuilder(str).reverse().toString();
+	        return Integer.parseInt(reversedStr);
+	    }
+
+	    // Handle the print statement (puts)
+	    private void handlePrint(String line) {
+	        // Extract the variable name inside the parentheses
+	        String varName = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+
+	        // Check if the variable exists and print it
+	        Integer value = variables.get(varName);
+	        if (value != null) {
+	            System.out.println(value);
+	        } else {
+	            System.out.println("undefined variable: " + varName); // Print error if variable is not found
+	        }
+	    }
+
+	    public static void main(String[] args) {
+	        SimpleInterpreter interpreter = new SimpleInterpreter();
+
+	        // Example program (Ruby):
+	        String program = """
+	                           number = 1234
+	                           reversed = number.to_s.reverse.to_i
+	                           puts(reversed)
+	                        """;
+
+	        interpreter.eval(program); // Execute the program
+	    }
+	}
