@@ -1,0 +1,61 @@
+import java.util.HashMap;
+import java.util.Map;
+
+public class SimpleInterpreter {
+    private final Map<String, Integer> variables = new HashMap<>(); // variable storage
+
+    public void eval(String code) {
+        String[] lines = code.split(";"); // splitting by statement terminator
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+
+            // handling variable assignment(multiplication)
+            if (line.contains("=")) {
+                handleAssignment(line);
+            }
+            // handling print statements
+            else if (line.startsWith("PRINT")) {
+                handlePrint(line);
+            }
+        }
+    }
+
+    private void handleAssignment(String line) {
+        String[] parts = line.split("=");
+        String varName = parts[0].trim();
+        String expression = parts[1].trim();
+
+        // parsing the multiplication expression (e.g., "5 * 3")
+        if (expression.contains("*")) {
+            String[] numbers = expression.split("\\*");
+            int value = Integer.parseInt(numbers[0].trim()) * Integer.parseInt(numbers[1].trim());
+            variables.put(varName, value);
+        }
+    }
+
+    private void handlePrint(String line) {
+        String varName = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+        System.out.println(variables.get(varName));
+    }
+
+    public static void main(String[] args) {
+        SimpleInterpreter interpreter = new SimpleInterpreter();
+
+        // example program: generate multiplication table for 5
+        String program = """
+            result = 5 * 1;
+            PRINT(result);
+            result = 5 * 2;
+            PRINT(result);
+            result = 5 * 3;
+            PRINT(result);
+            result = 5 * 4;
+            PRINT(result);
+            result = 5 * 5;
+            PRINT(result);
+        """;
+
+        interpreter.eval(program);
+    }
+}
