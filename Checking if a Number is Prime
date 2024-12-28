@@ -1,0 +1,74 @@
+import java.util.HashMap;
+import java.util.Map;
+
+public class SimpleInterpreter {
+    private final Map<String, Integer> variables = new HashMap<>(); // variable storage
+
+    public void eval(String code) {
+        String[] lines = code.split(";"); // Sslitting by statement terminator
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+
+            // handling variable assignment
+            if (line.contains("=")) {
+                handleAssignment(line);
+            }
+            // handling prime check and print statements
+            else if (line.startsWith("PRINT")) {
+                handlePrint(line);
+            } else if (line.startsWith("IS_PRIME")) {
+                handlePrimeCheck(line);
+            }
+        }
+    }
+
+    private void handleAssignment(String line) {
+        String[] parts = line.split("=");
+        String varName = parts[0].trim();
+        String expression = parts[1].trim();
+        int value = Integer.parseInt(expression.trim());
+        variables.put(varName, value);
+    }
+
+    private void handlePrint(String line) {
+        String varName = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+        System.out.println(variables.get(varName));
+    }
+
+    private void handlePrimeCheck(String line) {
+        String varName = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+        int number = variables.get(varName);
+        if (isPrime(number)) {
+            System.out.println(varName + " is prime");
+        } else {
+            System.out.println(varName + " is not prime");
+        }
+    }
+
+    private boolean isPrime(int number) {
+        if (number <= 1) {
+            return false;
+        }
+        for (int i = 2; i <= number / 2; i++) {
+            if (number % i == 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void main(String[] args) {
+        SimpleInterpreter interpreter = new SimpleInterpreter();
+
+        // example program: checking if a number is prime and print the result
+        String program = """
+            num = 29;
+            IS_PRIME(num);
+            num = 10;
+            IS_PRIME(num);
+        """;
+
+        interpreter.eval(program);
+    }
+}
