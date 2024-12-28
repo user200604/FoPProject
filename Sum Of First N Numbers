@@ -1,31 +1,71 @@
-import java.util.Scanner;
-
-
 public class SimpleInterpreter {
+    private int variable; // single variable to hold value
+
+    public void eval(String code) {
+        String[] lines = code.split(";"); // splitting code by statement terminator
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+
+            if (line.contains("=")) {
+                handleAssignment(line);
+            } else if (line.startsWith("PRINT")) {
+                handlePrint(line);
+            }
+        }
+    }
+
+    private void handleAssignment(String line) {
+        String[] parts = line.split("=");
+        String varName = parts[0].trim(); // variable name
+        String expression = parts[1].trim();
+
+        if (expression.startsWith("SUM")) {
+            // calculating sum of first N numbers
+            int n = extractNumber(expression);
+            variable = sumOfFirstN(n);
+        } else if (expression.contains("+")) {
+            // handling addition
+            String[] numbers = expression.split("\\+");
+            int num1 = Integer.parseInt(numbers[0].trim());
+            int num2 = Integer.parseInt(numbers[1].trim());
+            variable = num1 + num2;
+        } else {
+            // assigning single number
+            variable = Integer.parseInt(expression);
+        }
+    }
+
+    private void handlePrint(String line) {
+        System.out.println(variable);
+    }
+
+    private int extractNumber(String expression) {
+        int start = expression.indexOf('(') + 1;
+        int end = expression.indexOf(')');
+        return Integer.parseInt(expression.substring(start, end).trim());
+    }
+
+    private int sumOfFirstN(int n) {
+        int sum = 0;
+        for (int i = 1; i <= n; i++) {
+            sum += i;
+        }
+        return sum;
+    }
+
     public static void main(String[] args) {
+        SimpleInterpreter interpreter = new SimpleInterpreter();
 
+        // example program: calculate sum of first 10 numbers and add 10 + 20
+        String program = """
+            result = SUM(10);
+            total = 10 + 20;
+            PRINT(result);
+            PRINT(total);
+        """;
 
-        // creating scanner
-         Scanner scanner = new Scanner(System.in);
+        interpreter.eval(program);
+    }
+}
 
-
-        // prompt user for input
-         System.out.print("Enter the N:");
-         int N = scanner.nextInt();
-
-
-        // checking whether the input is positive or not
-         if (N <= 0) {
-             System.out.println("The written N isn't positive.");
-         } else { // calculating the sum with a loop
-         int sum = 0;
-         for (int i = 1; i <= N; i++) {
-         sum += i;
-         }
-        // displaying the output
-         System.out.println("The sum of the first " + N + " numbers is " + sum);
-         }
-        // ultimately, closing the scanner
-         scanner.close();
-     }
-         }
