@@ -1,0 +1,73 @@
+import java.util.HashMap;
+import java.util.Map;
+
+public class SimpleInterpreter {
+    private final Map<String, Integer> variables = new HashMap<>(); // variable storage
+
+    public void eval(String code) {
+        String[] lines = code.split(";"); // splitting by statement terminator
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+
+            // handling variable assignment
+            if (line.contains("=")) {
+                handleAssignment(line);
+            }
+            // handling print statements
+            else if (line.startsWith("PRINT")) {
+                handlePrint(line);
+            }
+        }
+    }
+
+    private void handleAssignment(String line) {
+        String[] parts = line.split("=");
+        String varName = parts[0].trim();
+        String expression = parts[1].trim();
+
+        // handling GCD calculation, if "GCD" is in the expression
+        if (expression.startsWith("GCD")) {
+            String args = expression.substring(expression.indexOf('(') + 1, expression.indexOf(')'));
+            String[] numbers = args.split(",");
+            int num1 = Integer.parseInt(numbers[0].trim());
+            int num2 = Integer.parseInt(numbers[1].trim());
+            int value = gcd(num1, num2);
+            variables.put(varName, value);
+        }
+        // handling simple arithmetic, for instance, addition
+        else if (expression.contains("+")) {
+            String[] numbers = expression.split("\\+");
+            int value = Integer.parseInt(numbers[0].trim()) + Integer.parseInt(numbers[1].trim());
+            variables.put(varName, value);
+        }
+    }
+
+    private void handlePrint(String line) {
+        String varName = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+        System.out.println(variables.get(varName));
+    }
+
+    // helper method to calculate GCD using loops
+    private int gcd(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+
+    public static void main(String[] args) {
+        SimpleInterpreter interpreter = new SimpleInterpreter();
+
+        // example program: calculating and printing the GCD of 48 and 18
+        String program = """
+            result = GCD(48, 18);
+            PRINT(result);
+        """;
+
+        interpreter.eval(program);
+    }
+}
+
