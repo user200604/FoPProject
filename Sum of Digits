@@ -1,0 +1,93 @@
+import java.util.Map;
+import java.util.HashMap;
+ 
+public class SimpleInterpreter {
+    private final Map<String, Integer> variables = new HashMap<>(); // variable storage
+ 
+    public void eval(String code) {
+        String[] lines = code.split(";"); // splitting by statement terminator
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty()) continue;
+ 
+            // handling variable assignment
+            if (line.startsWith("def")) {
+                handleAssignment(line);
+            }
+            // handling print statements
+            else if (line.startsWith("puts")) {
+                handlePrint(line);
+            }
+            // handling sum of digits
+            else if (line.startsWith("sum_of_digits")) {
+                handleSumOfDigits(line);
+            }
+        }
+    }
+ 
+    private void handleAssignment(String line) {
+        String[] parts = line.split("="); // splitting into variable and expression
+        String varName = parts[0].trim().substring(4).trim(); // removing the "def"
+        int value = Integer.parseInt(parts[1].trim()); // parsing the value
+        variables.put(varName, value); // storing the variable value
+    }
+ 
+    private void handlePrint(String line) {
+        String varName = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+        Integer value = variables.get(varName);
+        if (value != null) {
+            System.out.println(value); // printing the variable value
+        } else {
+            System.out.println("Variable not found: " + varName); // handling the undefined variable
+        }
+    }
+ 
+    private void handleSumOfDigits(String line) {
+        // extracting the content inside parentheses
+        String content = line.substring(line.indexOf('(') + 1, line.indexOf(')')).trim();
+ 
+        // checking whether the content is a variable name
+        Integer value = variables.get(content); // trying to get the variable's value
+        int number;
+ 
+        if (value != null) {
+            number = value; // using the variable's value
+        } else {
+            // otherwise, assuming it's a numeric literal
+            try {
+                number = Integer.parseInt(content);
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input for sum_of_digits: " + content);
+                return;
+            }
+        }
+ 
+        // calculating and printing the sum of digits
+        int sum = sumDigits(number);
+        System.out.println(sum);
+    }
+ 
+    private int sumDigits(int number) {
+        int sum = 0;
+        while (number > 0) {
+            sum += number % 10; // adding the last digit to sum
+            number /= 10; // removing the last digit
+        }
+        return sum;
+    }
+ 
+    public static void main(String[] args) {
+        SimpleInterpreter interpreter = new SimpleInterpreter();
+ 
+        // example program to calculate the sum of digits of 1234
+        String program = """
+            def number = 1234;
+            sum_of_digits(number);
+        """;
+ 
+        interpreter.eval(program);
+    }
+}
+
+
+
