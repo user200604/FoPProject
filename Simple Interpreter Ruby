@@ -1,0 +1,462 @@
+import java.util.Scanner;
+import java.util.HashMap;
+ 
+public class RubyInterpreter {
+    private static HashMap<String, Integer> variables = new HashMap<>();
+ 
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Ruby-like Interpreter - Type 'exit' to quit");
+        String[] lines = new String[100]; // Fixed-size array for program lines
+        int lineCount = 0;
+ 
+        // Read program lines
+        while (true) {
+            System.out.print("> ");
+            String line = scanner.nextLine().trim();
+            if (line.equals("exit")) break;
+            lines[lineCount++] = line;
+        }
+ 
+        // Execute program
+        int i = 0;
+        while (i < lineCount) {
+            i = executeLine(lines, i, lineCount); // Execute line and move to the next line
+        }
+        scanner.close(); //close scanner
+    }
+ 
+    private static int executeLine(String[] lines, int currentLine, int lineCount) {
+        String line = lines[currentLine];
+     
+        if (line.startsWith("puts") || line.startsWith("print")) {
+            handlePrint(line);
+        } else if (line.contains("=") && !line.startsWith("if") && !line.startsWith("while")) { // Avoid treating `if` as an assignment
+            handleAssignment(line);
+        } else if (line.startsWith("if")) {
+            return handleIf(lines, currentLine, lineCount);
+        } else if (line.startsWith("while")) {
+            return handleWhile(lines, currentLine, lineCount);
+        } else if (line.startsWith("sum_first_n")) {
+            handleSumOfFirstN(line);
+        } else if (line.startsWith("factorial")) {
+            handleFactorial(line);
+        } else if (line.startsWith("gcd")) {
+            handleGCD(line);
+        } else if (line.startsWith("reverse")) {
+            handleReverse(line);
+        } else if (line.startsWith("is_prime")) {
+            handleIsPrime(line);
+        } else if (line.startsWith("is_palindrome")) {
+            handleIsPalindrome(line);
+        } else if (line.startsWith("largest_digit")) {
+            handleLargestDigit(line);
+        } else if (line.startsWith("sum_of_digits")) {
+            handleSumOfDigits(line);
+        } else if (line.startsWith("multiplication_table")) {
+            handleMultiplicationTable(line);
+        } else if (line.startsWith("fibonacci")) {
+            handleFibonacci(line);
+        } else if (line.equals("end")) {
+            // Ignore standalone `end`
+        } else {
+            throw new RuntimeException("Unknown command: " + line);
+        }
+        return currentLine + 1; // Move to the next line
+    }
+
+    private static void handleOperation(String operation) {
+        if (operation.contains("+=")) {
+            String[] parts = operation.split("\\+=");
+            String variable = parts[0].trim();
+            int incrementValue = evaluateExpression(parts[1].trim());
+            int currentValue = variables.getOrDefault(variable, 0);
+            variables.put(variable, currentValue + incrementValue);
+        } else if (operation.contains("-=")) {
+            String[] parts = operation.split("-=");
+            String variable = parts[0].trim();
+            int decrementValue = evaluateExpression(parts[1].trim());
+            int currentValue = variables.getOrDefault(variable, 0);
+            variables.put(variable, currentValue - decrementValue);
+        } else if (operation.contains("*=")) {
+            String[] parts = operation.split("\\*=");
+            String variable = parts[0].trim();
+            int multiplyValue = evaluateExpression(parts[1].trim());
+            int currentValue = variables.getOrDefault(variable, 0);
+            variables.put(variable, currentValue * multiplyValue);
+        } else if (operation.contains("/=")) {
+            String[] parts = operation.split("/=");
+            String variable = parts[0].trim();
+            int divideValue = evaluateExpression(parts[1].trim());
+            int currentValue = variables.getOrDefault(variable, 0);
+            if (divideValue == 0) {
+                throw new RuntimeException("Division by zero");
+            }
+            variables.put(variable, currentValue / divideValue);
+        } else {
+            throw new RuntimeException("Invalid operation: " + operation);
+        }
+    }
+
+    private static int handleIf(String[] lines, int currentLine, int lineCount) {
+ 	   String condition = lines[currentLine].substring(3).trim(); // Extract condition after "if"
+ 	   boolean conditionMet = evaluateCondition(condition);
+ 	   currentLine++; // Move to the next line after "if"
+ 	   while (currentLine < lineCount) {
+ 	       String line = lines[currentLine];
+ 	       if (line.equals("else")) {
+ 	           if (conditionMet) {
+ 	               // Skip "else" block if the condition was met
+ 	               while (!lines[currentLine].equals("end")) {
+ 	                   currentLine++;
+ 	               }
+ 	           }
+ 	           return currentLine + 1; // Skip "else" block or exit after "end"
+ 	       }
+ 	       if (line.equals("end")) {
+ 	           return currentLine + 1; // End of "if" block
+ 	       }
+ 	       // Execute block if condition is met
+ 	       if (conditionMet) {
+ 	           currentLine = executeLine(lines, currentLine, lineCount);
+ 	       } else {
+ 	           currentLine++;
+ 	       }
+ 	   }
+ 	   throw new RuntimeException("Missing 'end' for 'if' block.");
+ 	}
+    private static int handleWhile(String[] lines, int currentLine, int lineCount) {
+ 	   String condition = lines[currentLine].substring(6).trim(); // Extract condition after "while"
+ 	   int loopStart = currentLine + 1; // Start of the loop block
+ 	   currentLine++; // Move to the first line of the loop block
+ 	   while (evaluateCondition(condition)) {
+ 		   
+ 	       int i = loopStart;
+ 	       while (i < lineCount && !lines[i].equals("end")) {
+ 	           i = executeLine(lines, i, lineCount);
+ 	       }
+ 	       currentLine = loopStart;
+ 	   }
+ 	   
+ 	   // Skip to the line after "end"
+ 	   while (currentLine < lineCount && !lines[currentLine].equals("end")) {
+ 	       currentLine++;
+ 	   }
+ 	   if (currentLine < lineCount && lines[currentLine].equals("end")) {
+ 	       return currentLine + 1; // Move to the line after "end"
+ 	   }
+ 	   throw new RuntimeException("Missing 'end' for 'while' block.");
+ 	}
+    private static void handlePrint(String line) {
+        String expression = line.substring(5).trim(); // Extract expression after "puts"
+        if (variables.containsKey(expression)) {
+            System.out.println(variables.get(expression)); // Print variable value if exists
+        } else {
+        	 // Check for string interpolation like "#{n} * #{i} = #{n * i}"
+            if (expression.startsWith("#{") && expression.endsWith("}")) {
+                String innerExpression = expression.substring(2, expression.length() - 1); // Get the content inside "#{...}"
+                String[] parts = innerExpression.split("\\*");
+                if (parts.length == 2) {
+                    int first = evaluateExpression(parts[0].trim());
+                    int second = evaluateExpression(parts[1].trim());
+                    System.out.println(first * second);
+                } else {
+                    System.out.println(evaluateExpression(innerExpression)); // Print normal evaluated expression
+                }
+            } else {
+                System.out.println(evaluateExpression(expression)); // Print evaluated expression
+            }
+        }
+    }
+
+    private static void handleAssignment(String line) {
+        String[] parts = line.split("=", 2);
+        String varName = parts[0].trim();
+        String expr = parts[1].trim();
+
+        // Check for compound assignment operators (+=, -=, *=, /=)
+        if (expr.contains("+=") || expr.contains("-=") || expr.contains("*=") || expr.contains("/=")) {
+            String operator = "";
+            if (expr.contains("+=")) operator = "+=";
+            else if (expr.contains("-=")) operator = "-=";
+            else if (expr.contains("*=")) operator = "*=";
+            else if (expr.contains("/=")) operator = "/=";
+            
+            // Split the expression by the operator
+            String[] exprParts = expr.split("\\" + operator, 2);
+            String rightSide = exprParts[1].trim();  // Right-hand side expression
+            int rightValue = evaluateExpression(rightSide);  // Evaluate the expression on the right side
+
+            // Get the current value of the variable
+            int currentValue = variables.getOrDefault(varName, 0);  // Default to 0 if not found
+
+            // Apply the operation based on the operator
+            int newValue = 0;
+            switch (operator) {
+                case "+=":
+                    newValue = currentValue + rightValue;
+                    break;
+                case "-=":
+                    newValue = currentValue - rightValue;
+                    break;
+                case "*=":
+                    newValue = currentValue * rightValue;
+                    break;
+                case "/=":
+                    newValue = currentValue / rightValue;
+                    break;
+            }
+            
+            // Update the variable with the new value
+            variables.put(varName, newValue);
+        } else {
+            // Simple assignment
+            if (!varName.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+                throw new RuntimeException("Invalid variable name: " + varName);
+            }
+            if (varName.isEmpty() || expr.isEmpty()) {
+                throw new RuntimeException("Invalid assignment: " + line);
+            }
+
+            // Evaluate the expression and assign it to the variable
+            int value = evaluateExpression(expr);
+            variables.put(varName, value);  // Store the variable in the map
+        }
+    }
+
+    private static boolean evaluateCondition(String condition) {
+    	   String[] parts;
+    	   if (condition.contains("==")) {
+    	       parts = condition.split("==");
+    	       return evaluateExpression(parts[0].trim()) == evaluateExpression(parts[1].trim());
+    	   } else if (condition.contains("!=")) {
+    	       parts = condition.split("!=");
+    	       return evaluateExpression(parts[0].trim()) != evaluateExpression(parts[1].trim());
+    	   } else if (condition.contains("<=")) {
+    	       parts = condition.split("<=");
+    	       return evaluateExpression(parts[0].trim()) <= evaluateExpression(parts[1].trim());
+    	   } else if (condition.contains(">=")) {
+    	       parts = condition.split(">=");
+    	       return evaluateExpression(parts[0].trim()) >= evaluateExpression(parts[1].trim());
+    	   } else if (condition.contains("<")) {
+    	       parts = condition.split("<");
+    	       return evaluateExpression(parts[0].trim()) < evaluateExpression(parts[1].trim());
+    	   } else if (condition.contains(">")) {
+    	       parts = condition.split(">");
+    	       return evaluateExpression(parts[0].trim()) > evaluateExpression(parts[1].trim());
+    	   }
+    	   throw new RuntimeException("Invalid condition: " + condition);
+    	}
+  
+
+    
+    private static int evaluateExpression(String expr) {
+        expr = expr.replaceAll("\\s+", ""); // remove whitespace
+
+        // Handle boolean literals (true/false)
+        if (expr.equals("true")) {
+            return 1; // Represent 'true' as 1
+        } else if (expr.equals("false")) {
+            return 0; // Represent 'false' as 0
+        }
+        // If it's a number, return it directly
+        if (expr.matches("\\d+")) {
+            return Integer.parseInt(expr);
+        } 
+        // If it's a variable, get its value
+        else if (expr.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+            if (!variables.containsKey(expr)) {
+                throw new RuntimeException("Undefined variable: " + expr);
+            }
+            return variables.get(expr);
+        } 
+        // Handle addition
+        else if (expr.contains("+")) {
+            String[] parts = expr.split("\\+");
+            return evaluateExpression(parts[0]) + evaluateExpression(parts[1]);
+        } 
+        // Handle subtraction
+        else if (expr.contains("-")) {
+            String[] parts = expr.split("-");
+            return evaluateExpression(parts[0]) - evaluateExpression(parts[1]);
+        } 
+        // Handle multiplication
+        else if (expr.contains("*")) {
+            String[] parts = expr.split("\\*");
+            return evaluateExpression(parts[0]) * evaluateExpression(parts[1]);
+        } 
+        // Handle division
+        else if (expr.contains("/")) {
+            String[] parts = expr.split("/");
+            return evaluateExpression(parts[0]) / evaluateExpression(parts[1]);
+        } 
+        // Handle modulo
+        else if (expr.contains("%")) {
+            String[] parts = expr.split("%");
+            return evaluateExpression(parts[0]) % evaluateExpression(parts[1]);
+        } 
+        // Handle Math.max expression
+        else if (expr.startsWith("Math.max(") && expr.endsWith(")")) {
+            // Extract the expression inside Math.max(...)
+            String innerExpr = expr.substring(9, expr.length() - 1); // Remove "Math.max(" and ")"
+            
+            // Split the arguments by comma
+            String[] parts = innerExpr.split(",");
+            
+            // Evaluate both parts and return the max value
+            int first = evaluateExpression(parts[0].trim());
+            int second = evaluateExpression(parts[1].trim());
+            
+            return Math.max(first, second); // Return the maximum of the two evaluated values
+        }
+        // Handle Math.sqrt expression
+        else if (expr.startsWith("Math.sqrt(") && expr.endsWith(")")) {
+            // Extract the expression inside Math.sqrt(...)
+            String innerExpr = expr.substring(10, expr.length() - 1); // Remove "Math.sqrt(" and ")"
+            
+            // Evaluate the expression inside the square root
+            int value = evaluateExpression(innerExpr.trim());
+            
+            // Return the square root of the evaluated value
+            return (int) Math.sqrt(value); // Return the square root of the evaluated value
+        }
+
+        throw new RuntimeException("Invalid expression: " + expr);
+    }
+
+    // Algorithm-specific methods
+    private static void handleSumOfFirstN(String line) {
+        String[] parts = line.split(" ");
+        int n = evaluateExpression(parts[1]);
+        int sum = n * (n + 1) / 2;
+        System.out.println(sum);
+    }
+ 
+    private static void handleFactorial(String line) {
+        String[] parts = line.split(" ");
+        int n = evaluateExpression(parts[1]);
+        int fact = 1;
+        for (int i = 1; i <= n; i++) {
+            fact *= i;
+        }
+        System.out.println(fact);
+    }
+ 
+    private static void handleGCD(String line) {
+        String[] parts = line.split(" ");
+        int a = evaluateExpression(parts[1]);
+        int b = evaluateExpression(parts[2]);
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        System.out.println(a);
+    }
+ 
+    private static void handleReverse(String line) {
+        String[] parts = line.split(" ");
+        int num = evaluateExpression(parts[1]);
+        int reversed = 0;
+        while (num != 0) {
+            reversed = reversed * 10 + num % 10;
+            num /= 10;
+        }
+        System.out.println(reversed);
+    }
+ 
+    private static void handleIsPrime(String line) {
+        String[] parts = line.split(" ");
+        int num = evaluateExpression(parts[1]);
+        if (num <= 1) {
+            System.out.println(false);
+            return;
+        }
+        for (int i = 2; i <= Math.sqrt(num); i++) {
+            if (num % i == 0) {
+                System.out.println(false);
+                return;
+            }
+        }
+        System.out.println(true);
+    }
+ 
+    private static void handleIsPalindrome(String line) {
+        String[] parts = line.split(" ");
+        int num = evaluateExpression(parts[1]);
+        int original = num;
+        int reversed = 0;
+        while (num != 0) {
+            reversed = reversed * 10 + num % 10;
+            num /= 10;
+        }
+        System.out.println(original == reversed);
+    }
+ 
+
+    private static void handleLargestDigit(String line) {
+        String[] parts = line.split(" ");
+        
+        // Extract the number
+        int num = evaluateExpression(parts[1]);
+        
+        // Initialize variable for largest digit
+        int largest = 0;
+        
+        // Handle edge case for single digit numbers
+        if (num == 0) {
+            largest = 0; // 0 is the largest digit in 0
+        } else {
+            // Loop to find the largest digit
+            while (num > 0) {
+                int digit = num % 10;  // Get the last digit
+                largest = Math.max(largest, digit); // Update largest digit using Math.max()
+               
+                num /= 10; // Remove the last digit
+            }
+        }
+        
+        // Print the result (largest digit)
+        System.out.println(largest);
+    }
+
+
+    private static void handleSumOfDigits(String line) {
+        String[] parts = line.split(" ");
+        int num = evaluateExpression(parts[1]);
+        int sum = 0;
+        
+        while (num != 0) {
+            sum += num % 10;
+            num /= 10;
+        }
+        System.out.println(sum);
+    }
+ 
+    private static void handleMultiplicationTable(String line) {
+        String[] parts = line.split(" ");
+        int n = evaluateExpression(parts[1]);
+        for (int i = 1; i <= 10; i++) {
+            System.out.println(n + " * " + i + " = " + (n * i));
+        }
+    }
+ 
+    //private static void handleFibonacci(String line) {
+    private static int handleFibonacci(String line) {
+        String[] parts = line.split(" ");
+        int n = evaluateExpression(parts[1]);
+        if (n == 0) {
+//            System.out.println(0);
+          //  return;
+        	return 0;
+        }
+        int a = 0, b = 1;
+        for (int i = 2; i <= n; i++) {
+            int temp = a + b;
+            a = b;
+            b = temp;
+        }
+        return b;
+    }
+   
+}
